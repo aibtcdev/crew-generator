@@ -5,7 +5,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 // Function to get the base URL based on the environment
 const getBaseUrl = () => {
   if (process.env.NODE_ENV === "production") {
-    return process.env.NEXT_PUBLIC_SITE_URL; // Ensure this is set in your production environment
+    return process.env.NEXT_PUBLIC_SITE_URL!; // Ensure this is set in your production environment
   }
   return "http://localhost:3000"; // Default for local development
 };
@@ -44,8 +44,36 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/auth-error`);
     }
 
+    // Fetch user information
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error("Error fetching user information:", userError);
+      return NextResponse.redirect(`${origin}/auth-error`);
+    }
+
+    // Fetch username from profiles table
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !profileData) {
+      console.error("Error fetching profile information:", profileError);
+      return NextResponse.redirect(`${origin}/auth-error`);
+    }
+
+    const username = profileData.username;
+
+    // Construct user-specific dashboard URL using username
+    const userDashboardUrl = `${origin}/dashboard/${username}`;
+
     // Successful authentication
-    return NextResponse.redirect(`${origin}${next}`);
+    return NextResponse.redirect(userDashboardUrl);
   }
 
   // If no code is present, redirect to home page or login page

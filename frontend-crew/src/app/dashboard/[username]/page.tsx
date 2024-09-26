@@ -1,5 +1,11 @@
-const page = () => {
-  return <div>Welcome user</div>;
-};
+"use client";
 
-export default page;
+import React from "react";
+
+export default function Dashboard({
+  params,
+}: {
+  params: { username: string };
+}) {
+  return <>hello {params.username}</>;
+}

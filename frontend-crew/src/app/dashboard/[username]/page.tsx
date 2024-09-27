@@ -6,6 +6,8 @@ import { CrewForm } from "@/components/crews/CrewForm";
 import { CrewTable } from "@/components/crews/CrewTable";
 import { AgentTable } from "@/components/agents/AgentTable";
 import { AgentForm } from "@/components/agents/AgentForm";
+import { TaskForm } from "@/components/tasks/TaskForm";
+import { TaskTable } from "@/components/tasks/TaskTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -13,13 +15,17 @@ import { Database } from "@/types/supabase";
 
 type Crew = Database["public"]["Tables"]["crews"]["Row"];
 type Agent = Database["public"]["Tables"]["agents"]["Row"];
+type Task = Database["public"]["Tables"]["tasks"]["Row"];
 
 export default function Dashboard() {
   const [crews, setCrews] = useState<Crew[]>([]);
   const [selectedCrew, setSelectedCrew] = useState<Crew | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [showCrewForm, setShowCrewForm] = useState(false);
   const [showAgentForm, setShowAgentForm] = useState(false);
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [activeTab, setActiveTab] = useState("agents");
 
   const fetchCrews = async () => {
     const { data, error } = await supabase
@@ -50,6 +56,21 @@ export default function Dashboard() {
     setAgents(data);
   };
 
+  const fetchTasks = async (crewId: number) => {
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("crew_id", crewId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching tasks:", error);
+      return;
+    }
+
+    setTasks(data);
+  };
+
   useEffect(() => {
     fetchCrews();
   }, []);
@@ -57,6 +78,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (selectedCrew) {
       fetchAgents(selectedCrew.id);
+      fetchTasks(selectedCrew.id);
     }
   }, [selectedCrew]);
 
@@ -70,6 +92,14 @@ export default function Dashboard() {
       fetchAgents(selectedCrew.id);
     }
     setShowAgentForm(false);
+  };
+
+  const handleTaskCreated = () => {
+    if (selectedCrew) {
+      fetchTasks(selectedCrew.id);
+    }
+    setShowTaskForm(false);
+    setActiveTab("tasks");
   };
 
   return (
@@ -92,7 +122,11 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       ) : selectedCrew ? (
-        <Tabs defaultValue="agents" className="space-y-4">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-4"
+        >
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="agents">Agents</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
@@ -132,7 +166,27 @@ export default function Dashboard() {
                 <CardTitle>Tasks for {selectedCrew.name}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p>Task management coming soon...</p>
+                {showTaskForm ? (
+                  <TaskForm
+                    crewId={selectedCrew.id}
+                    agents={agents}
+                    onTaskCreated={handleTaskCreated}
+                  />
+                ) : (
+                  <>
+                    <Button
+                      onClick={() => setShowTaskForm(true)}
+                      className="mb-4"
+                    >
+                      Add New Task
+                    </Button>
+                    <TaskTable
+                      tasks={tasks}
+                      agents={agents}
+                      onTaskUpdate={() => fetchTasks(selectedCrew.id)}
+                    />
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

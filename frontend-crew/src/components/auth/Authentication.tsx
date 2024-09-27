@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { GithubIcon } from "lucide-react";
-import { socialAuth } from "@/helpers/auth-helpers";
+import { socialAuth } from "@/lib/auth-helpers";
 
 export function Authentication() {
   return (

@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase-client";
-import { CrewTable } from "@/components/crews/CrewTable";
 import { CrewForm } from "@/components/crews/CrewForm";
+import { CrewTable } from "@/components/crews/CrewTable";
 import { AgentTable } from "@/components/agents/AgentTable";
-import { AgentForm } from "@/components/agents/AgentForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Database } from "@/types/supabase";
 
 type Crew = Database["public"]["Tables"]["crews"]["Row"];
@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [crews, setCrews] = useState<Crew[]>([]);
   const [selectedCrew, setSelectedCrew] = useState<Crew | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [showCrewForm, setShowCrewForm] = useState(false);
 
   const fetchCrews = async () => {
     const { data, error } = await supabase
@@ -57,36 +58,38 @@ export default function Dashboard() {
     }
   }, [selectedCrew]);
 
+  const handleCrewCreated = () => {
+    fetchCrews();
+    setShowCrewForm(false);
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-8">
-      <h1 className="text-2xl font-bold mb-4">Crew and Agents Dashboard</h1>
-      <Tabs defaultValue="crews" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="crews">Crews</TabsTrigger>
-          <TabsTrigger value="agents" disabled={!selectedCrew}>
-            Agents
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="crews">
-          <Card>
-            <CardHeader>
-              <CardTitle>Crews</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CrewTable
-                crews={crews}
-                onCrewSelect={setSelectedCrew}
-                onCrewUpdate={fetchCrews}
-              />
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold mb-2">Create New Crew</h3>
-                <CrewForm onCrewCreated={fetchCrews} />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="agents">
-          {selectedCrew && (
+      <h1 className="text-2xl font-bold mb-4">Crew Dashboard</h1>
+      {!selectedCrew && !showCrewForm ? (
+        <div className="text-center">
+          <p className="mb-4">
+            Welcome! Start by creating a crew or select an existing one.
+          </p>
+          <Button onClick={() => setShowCrewForm(true)}>Create New Crew</Button>
+        </div>
+      ) : showCrewForm ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Create New Crew</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CrewForm onCrewCreated={handleCrewCreated} />
+          </CardContent>
+        </Card>
+      ) : selectedCrew ? (
+        <Tabs defaultValue="agents" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="agents">Agents</TabsTrigger>
+            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="tools">Tools</TabsTrigger>
+          </TabsList>
+          <TabsContent value="agents">
             <Card>
               <CardHeader>
                 <CardTitle>Agents for {selectedCrew.name}</CardTitle>
@@ -96,20 +99,45 @@ export default function Dashboard() {
                   agents={agents}
                   onAgentUpdate={() => fetchAgents(selectedCrew.id)}
                 />
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold mb-2">
-                    Create New Agent
-                  </h3>
-                  <AgentForm
-                    crewId={selectedCrew.id}
-                    onAgentCreated={() => fetchAgents(selectedCrew.id)}
-                  />
-                </div>
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+          <TabsContent value="tasks">
+            <Card>
+              <CardHeader>
+                <CardTitle>Tasks for {selectedCrew.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>Task management coming soon...</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="tools">
+            <Card>
+              <CardHeader>
+                <CardTitle>Tools for {selectedCrew.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>Tool management coming soon...</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      ) : null}
+      {crews.length > 0 && !selectedCrew && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Crews</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CrewTable
+              crews={crews}
+              onCrewSelect={setSelectedCrew}
+              onCrewUpdate={fetchCrews}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -7,9 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Database } from "@/types/supabase";
-
-type Agent = Database["public"]["Tables"]["agents"]["Insert"];
 
 interface AgentFormProps {
   crewId: number;

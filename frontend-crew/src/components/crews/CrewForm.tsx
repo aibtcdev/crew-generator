@@ -6,9 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Database } from "@/types/supabase";
-
-type Crew = Database["public"]["Tables"]["crews"]["Insert"];
 
 interface CrewFormProps {
   onCrewCreated: () => void;

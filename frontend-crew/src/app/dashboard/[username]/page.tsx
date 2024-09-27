@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase-client";
 import { CrewForm } from "@/components/crews/CrewForm";
 import { CrewTable } from "@/components/crews/CrewTable";
 import { AgentTable } from "@/components/agents/AgentTable";
+import { AgentForm } from "@/components/agents/AgentForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ export default function Dashboard() {
   const [selectedCrew, setSelectedCrew] = useState<Crew | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [showCrewForm, setShowCrewForm] = useState(false);
+  const [showAgentForm, setShowAgentForm] = useState(false);
 
   const fetchCrews = async () => {
     const { data, error } = await supabase
@@ -63,6 +65,13 @@ export default function Dashboard() {
     setShowCrewForm(false);
   };
 
+  const handleAgentCreated = () => {
+    if (selectedCrew) {
+      fetchAgents(selectedCrew.id);
+    }
+    setShowAgentForm(false);
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-8">
       <h1 className="text-2xl font-bold mb-4">Crew Dashboard</h1>
@@ -95,10 +104,25 @@ export default function Dashboard() {
                 <CardTitle>Agents for {selectedCrew.name}</CardTitle>
               </CardHeader>
               <CardContent>
-                <AgentTable
-                  agents={agents}
-                  onAgentUpdate={() => fetchAgents(selectedCrew.id)}
-                />
+                {showAgentForm ? (
+                  <AgentForm
+                    crewId={selectedCrew.id}
+                    onAgentCreated={handleAgentCreated}
+                  />
+                ) : (
+                  <>
+                    <Button
+                      onClick={() => setShowAgentForm(true)}
+                      className="mb-4"
+                    >
+                      Add New Agent
+                    </Button>
+                    <AgentTable
+                      agents={agents}
+                      onAgentUpdate={() => fetchAgents(selectedCrew.id)}
+                    />
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

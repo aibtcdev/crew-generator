@@ -74,7 +74,7 @@ export function CrewTable({
                   onClick={() => onCrewSelect(crew)}
                   className="mr-2"
                 >
-                  Select
+                  Run crew
                 </Button>
                 <Button
                   variant="destructive"

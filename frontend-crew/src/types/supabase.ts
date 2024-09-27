@@ -211,6 +211,7 @@ export type Database = {
         Row: {
           agent_id: number | null
           created_at: string | null
+          crew_id: number | null
           description: string
           expected_output: string
           id: number
@@ -219,6 +220,7 @@ export type Database = {
         Insert: {
           agent_id?: number | null
           created_at?: string | null
+          crew_id?: number | null
           description: string
           expected_output: string
           id?: number
@@ -227,6 +229,7 @@ export type Database = {
         Update: {
           agent_id?: number | null
           created_at?: string | null
+          crew_id?: number | null
           description?: string
           expected_output?: string
           id?: number
@@ -238,6 +241,13 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_crew_id_fkey"
+            columns: ["crew_id"]
+            isOneToOne: false
+            referencedRelation: "crews"
             referencedColumns: ["id"]
           },
           {

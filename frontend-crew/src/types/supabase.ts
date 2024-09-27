@@ -47,6 +47,7 @@ export type Database = {
           goal: string
           id: number
           name: string
+          profile_id: string | null
           role: string
         }
         Insert: {
@@ -56,6 +57,7 @@ export type Database = {
           goal: string
           id?: number
           name: string
+          profile_id?: string | null
           role: string
         }
         Update: {
@@ -65,6 +67,7 @@ export type Database = {
           goal?: string
           id?: number
           name?: string
+          profile_id?: string | null
           role?: string
         }
         Relationships: [
@@ -75,6 +78,13 @@ export type Database = {
             referencedRelation: "crews"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "agents_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       crew_results: {
@@ -82,28 +92,19 @@ export type Database = {
           actual_output: string | null
           created_at: string | null
           crew_id: number | null
-          expected_output: string | null
           id: number
-          output_matched: boolean | null
-          task_id: number | null
         }
         Insert: {
           actual_output?: string | null
           created_at?: string | null
           crew_id?: number | null
-          expected_output?: string | null
           id?: number
-          output_matched?: boolean | null
-          task_id?: number | null
         }
         Update: {
           actual_output?: string | null
           created_at?: string | null
           crew_id?: number | null
-          expected_output?: string | null
           id?: number
-          output_matched?: boolean | null
-          task_id?: number | null
         }
         Relationships: [
           {
@@ -111,13 +112,6 @@ export type Database = {
             columns: ["crew_id"]
             isOneToOne: false
             referencedRelation: "crews"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "crew_results_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -220,6 +214,7 @@ export type Database = {
           description: string
           expected_output: string
           id: number
+          profile_id: string | null
         }
         Insert: {
           agent_id?: number | null
@@ -227,6 +222,7 @@ export type Database = {
           description: string
           expected_output: string
           id?: number
+          profile_id?: string | null
         }
         Update: {
           agent_id?: number | null
@@ -234,6 +230,7 @@ export type Database = {
           description?: string
           expected_output?: string
           id?: number
+          profile_id?: string | null
         }
         Relationships: [
           {
@@ -241,6 +238,13 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]

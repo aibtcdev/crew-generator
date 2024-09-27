@@ -1,4 +1,4 @@
-import { supabaseBrowswerClient } from "./supabase-client";
+import { supabaseBrowswerClient } from "../lib/supabase-client";
 import { Provider } from "@supabase/supabase-js";
 
 // Function to handle social authentication

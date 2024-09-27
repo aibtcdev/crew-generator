@@ -1,70 +1,81 @@
+"use client";
+
 import React, { useState } from "react";
-import { supabaseBrowswerClient } from "@/helpers/supabase-client";
+import { supabaseBrowswerClient } from "@/lib/supabase-client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Database } from "@/types/supabase";
 
-const Crew = () => {
-  const [name, setName] = useState("");
+type Crew = Database["public"]["Tables"]["crews"]["Row"];
+
+interface CrewProps {
+  onCrewCreated: (crewId: number) => void;
+}
+
+export default function Crew({ onCrewCreated }: CrewProps) {
+  const [crewName, setCrewName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  // Function to handle the insert into Supabase
   const createCrew = async () => {
     setLoading(true);
-    setMessage("");
+    setError(null);
 
     try {
-      // Step 1: Get the logged-in user's ID from Supabase Auth
       const { data: user, error: userError } =
         await supabaseBrowswerClient.auth.getUser();
       if (userError) throw userError;
 
-      const userId = user?.user?.id; // User's ID from Supabase Auth
-
-      // Step 2: Query the 'profiles' table to get the corresponding profile_id
       const { data: profileData, error: profileError } =
         await supabaseBrowswerClient
           .from("profiles")
-          .select("id") // Select the profile ID
-          .eq("id", userId) // Match user_id from the profiles table
-          .single(); // Since we expect a 1-to-1 mapping between profiles and users
+          .select("id")
+          .eq("user_id", user.user.id)
+          .single();
 
       if (profileError) throw profileError;
 
-      const profile_id = profileData?.id; // Extract the profile_id from the result
-
-      // Step 3: Insert the crew with the name and profile_id
       const { data, error } = await supabaseBrowswerClient
         .from("crews")
-        .insert({ name, profile_id });
+        .insert({ name: crewName, profile_id: profileData.id })
+        .select()
+        .single();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      // On success
-      setMessage("Crew created successfully!");
+      onCrewCreated(data.id);
+      setCrewName("");
     } catch (error: any) {
-      setMessage(`Error: ${error.message}`);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div>
-      <h1>Create a Crew</h1>
-      <input
-        type="text"
-        placeholder="Enter crew name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <button onClick={createCrew} disabled={loading}>
-        {loading ? "Creating..." : "Create Crew"}
-      </button>
-
-      {message && <p>{message}</p>}
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Create a Crew</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="crewName">Crew Name</Label>
+            <Input
+              id="crewName"
+              value={crewName}
+              onChange={(e) => setCrewName(e.target.value)}
+              placeholder="Enter crew name"
+            />
+          </div>
+          <Button onClick={createCrew} disabled={loading || !crewName}>
+            {loading ? "Creating..." : "Create Crew"}
+          </Button>
+          {error && <p className="text-sm text-red-500">{error}</p>}
+        </div>
+      </CardContent>
+    </Card>
   );
-};
-
-export default Crew;
+}

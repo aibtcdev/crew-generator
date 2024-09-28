@@ -11,6 +11,7 @@ import { TaskTable } from "@/components/tasks/TaskTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Database } from "@/types/supabase";
 
 type Crew = Database["public"]["Tables"]["crews"]["Row"];
@@ -26,6 +27,8 @@ export default function Dashboard() {
   const [showAgentForm, setShowAgentForm] = useState(false);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [activeTab, setActiveTab] = useState("agents");
+  const [inputStr, setInputStr] = useState("");
+  const [apiResponse, setApiResponse] = useState<any>(null);
 
   const fetchCrews = async () => {
     const { data, error } = await supabase
@@ -102,6 +105,37 @@ export default function Dashboard() {
     setActiveTab("tasks");
   };
 
+  const handleExecuteCrew = async () => {
+    if (!selectedCrew) {
+      console.error("No crew selected");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        // TODO: ADD IT IN THE ENV FILE
+        `http://127.0.0.1:8000/execute_crew/${selectedCrew.id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(inputStr),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setApiResponse(data);
+    } catch (error) {
+      console.error("Error:", error);
+      setApiResponse({ error: "Error occurred while executing the crew." });
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-8">
       <h1 className="text-2xl font-bold mb-4">Crew Dashboard</h1>
@@ -127,10 +161,9 @@ export default function Dashboard() {
           onValueChange={setActiveTab}
           className="space-y-4"
         >
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="agents">Agents</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
-            <TabsTrigger value="tools">Tools</TabsTrigger>
           </TabsList>
           <TabsContent value="agents">
             <Card>
@@ -190,16 +223,6 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="tools">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tools for {selectedCrew.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>Tool management coming soon...</p>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
       ) : null}
       {crews.length > 0 && !selectedCrew && (
@@ -213,6 +236,45 @@ export default function Dashboard() {
               onCrewSelect={setSelectedCrew}
               onCrewUpdate={fetchCrews}
             />
+          </CardContent>
+        </Card>
+      )}
+      {selectedCrew && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Execute Crew</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex space-x-2 mb-4">
+              <Input
+                type="text"
+                value={inputStr}
+                onChange={(e) => setInputStr(e.target.value)}
+                placeholder="Enter input data"
+              />
+              <Button onClick={handleExecuteCrew}>Execute</Button>
+            </div>
+            {apiResponse && (
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold mb-2">API Response:</h3>
+                <div className="space-y-4">
+                  {apiResponse.result?.tasks_output?.map(
+                    (task: any, index: number) => (
+                      <Card key={index}>
+                        <CardHeader>
+                          <CardTitle>{task.agent} Output</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <pre className="bg-gray-100 p-4 rounded-md overflow-auto whitespace-pre-wrap">
+                            {task.raw}
+                          </pre>
+                        </CardContent>
+                      </Card>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

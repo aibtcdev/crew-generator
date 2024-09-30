@@ -412,7 +412,7 @@ export default function Dashboard() {
                     value={inputStr}
                     onChange={(e) => setInputStr(e.target.value)}
                     placeholder="Enter input data"
-                    onKeyPress={(e) => e.key === "Enter" && handleExecuteCrew()}
+                    onKeyUp={(e) => e.key === "Enter" && handleExecuteCrew()}
                   />
                   <Button onClick={handleExecuteCrew}>
                     <Send className="h-4 w-4" />

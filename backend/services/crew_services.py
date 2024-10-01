@@ -1,27 +1,105 @@
-import os
+# Import necessary modules
 from backend.db.supabase_client import supabase
 from crewai import Agent, Task, Crew, Process
 from crewai_tools import SerperDevTool
 from dotenv import load_dotenv
+# from backend.tools.tools_factory import initialize_tools, get_agent_tools
+import requests
 
 # Load environment variables
 load_dotenv()
 
-# Set your API key for SerperDevTool
-os.environ["SERPER_API_KEY"] = "305e253036f63a90ed80ca7bc8ac3b33f1a3eaf0"
+# Base class for all tools
+class BaseTool:
+    """Base class for all tools."""
+    def __init__(self, name: str, description: str, args: dict):
+        self.name = name
+        self.description = description
+        self.args = args  # Arguments schema for the tool
 
-# Initialize tools
-web_search_tool = SerperDevTool()
+    def execute(self, *args, **kwargs):
+        raise NotImplementedError("Tools must implement the 'execute' method.")
 
-# Create a mapping of tool names to tool instances
-tools_map = {
-    "web_search": web_search_tool,
-    # Add any other tools you might use
-}
+class FetchContractCodeTool(BaseTool):
+    """Tool for fetching contract code."""
+    def __init__(self):
+        super().__init__(
+            name="FetchContractCodeTool", 
+            description="Fetches the contract code for a given address and name.",
+            args={"contract_address": {"type": "string"}, "contract_name": {"type": "string"}}
+        )
+    
+    def execute(self, contract_address: str, contract_name: str):
+        source_url = f"https://api.hiro.so/v2/contracts/source/{contract_address}/{contract_name}"
+        
+        # Fetch data from the source endpoint
+        response = requests.get(source_url)
+        if response.status_code == 200:
+            source_data = response.json()
+            return f"Source Data: {source_data}"
+        else:
+            return f"Failed to fetch source data: {response.status_code}"
+
+class FetchInterfaceDataTool(BaseTool):
+    """Tool for fetching contract interface data."""
+    def __init__(self):
+        super().__init__(
+            name="FetchInterfaceDataTool", 
+            description="Fetches the interface data for a given contract address and name.",
+            args={"contract_address": {"type": "string"}, "contract_name": {"type": "string"}}
+        )
+    
+    def execute(self, contract_address: str, contract_name: str):
+        interface_url = f"https://api.hiro.so/v2/contracts/interface/{contract_address}/{contract_name}"
+        
+        # Fetch data from the interface endpoint
+        response = requests.get(interface_url)
+        if response.status_code == 200:
+            interface_data = response.json()
+            return f"Interface Data: {interface_data}"
+        else:
+            return f"Failed to fetch interface data: {response.status_code}"
+
+# Function to initialize all tools
+def initialize_tools():
+    """
+    Initialize and return a dictionary of available tools.
+    """
+    return {
+        "web_search": SerperDevTool(),  
+        "fetch_contract_code": FetchContractCodeTool(),
+        "fetch_interface_data": FetchInterfaceDataTool(),
+    }
+
+# Function to get tools for a specific agent
+def get_agent_tools(tool_names, tools_map):
+    """
+    Get the tools for an agent based on the tool names.
+    
+    Args:
+        tool_names (list): List of tool names for the agent.
+        tools_map (dict): Dictionary mapping tool names to tool instances.
+    
+    Returns:
+        list: List of tool instances for the agent.
+    """
+    agent_tools = []
+    for tool_name in tool_names:
+        if tool_name in tools_map:
+            tool = tools_map[tool_name]
+            if isinstance(tool, BaseTool):
+                agent_tools.append(tool)
+            else:
+                print(f"Warning: Tool '{tool_name}' is not a valid tool instance")
+        else:
+            print(f"Warning: Tool '{tool_name}' not found for agent")
+    return agent_tools
 
 # Log the available tools for debugging
+tools_map = initialize_tools()
 print("Available tools:", tools_map)
 
+# Function to fetch agents and tasks for a specific crew
 def fetch_crew_data(crew_id: int):
     """
     Fetch agents and tasks for the specified crew from Supabase.
@@ -43,6 +121,7 @@ def fetch_crew_data(crew_id: int):
     
     return agents_response.data, tasks_response.data
 
+# Function to create the manager agent
 def create_manager_agent():
     """
     Create and return a manager agent who oversees and refines tasks, as well as handles task outputs.
@@ -56,7 +135,7 @@ def create_manager_agent():
         backstory=(
             "You are a skilled manager responsible for refining tasks and managing outputs between agents."
             "You ensure that each task is well-structured and agents work with the correct information."
-            "You should only guide and improve the task description not perform the task yourself."
+            "You should only guide and improve the task description, not perform the task yourself."
         ),
         verbose=True,
         memory=True,
@@ -64,6 +143,7 @@ def create_manager_agent():
     )
     return manager_agent
 
+# Function to refine tasks by the manager agent
 def refine_task(manager, task_description, agent_role, task_output):
     """
     Manager refines the task description by processing the task using Agent's execute_task method.
@@ -91,6 +171,7 @@ def refine_task(manager, task_description, agent_role, task_output):
 
     return refined_description
 
+# Function to execute a crew
 def execute_crew(crew_id: int, input_str: str):
     """
     Execute a crew by fetching agents and tasks for a given crew_id and managing the flow of outputs between tasks.
@@ -115,13 +196,8 @@ def execute_crew(crew_id: int, input_str: str):
         
         print(f"Agent {agent_data['role']} fetched tools: {agent_tool_names}")
         
-        # Assign the corresponding tools from the tools_map (skip missing or invalid tools)
-        agent_tools = []
-        for tool_name in agent_tool_names:
-            if tool_name in tools_map:
-                agent_tools.append(tools_map[tool_name])
-            else:
-                print(f"Warning: Tool '{tool_name}' not found for agent {agent_data['role']}")
+        # Get the tools for the agent
+        agent_tools = get_agent_tools(agent_tool_names, tools_map)
 
         # Debugging: Check if tools were correctly mapped
         if agent_tools:

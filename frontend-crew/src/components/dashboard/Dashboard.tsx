@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import { supabase } from "@/lib/supabase-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Crew {
   id: number;
@@ -43,7 +45,7 @@ interface Agent {
   role: string;
   goal: string;
   backstory: string;
-  agent_tools: string;
+  agent_tools: string | string[];
 }
 
 interface Task {
@@ -51,6 +53,18 @@ interface Task {
   description: string;
   expected_output: string;
   agent_id: number | null;
+}
+
+interface ApiResponse {
+  description: string;
+  name: string | null;
+  expected_output: string;
+  summary: string;
+  raw: string;
+  pydantic: any;
+  json_dict: any;
+  agent: string;
+  output_format: string;
 }
 
 export default function Dashboard() {
@@ -62,6 +76,10 @@ export default function Dashboard() {
   const [apiResponse, setApiResponse] = useState<string>("");
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [parsedResponse, setParsedResponse] = useState<ApiResponse | null>(
+    null
+  );
 
   useEffect(() => {
     fetchCrews();
@@ -123,6 +141,7 @@ export default function Dashboard() {
   const handleExecuteCrew = async () => {
     if (!selectedCrew || !inputStr.trim()) return;
 
+    setIsLoading(true);
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/execute_crew/${selectedCrew.id}`,
@@ -141,9 +160,13 @@ export default function Dashboard() {
 
       const data = await response.json();
       setApiResponse(JSON.stringify(data.result.tasks_output, null, 2));
+      setParsedResponse(data.result.tasks_output[0]);
     } catch (error) {
       console.error("Error:", error);
       setApiResponse("Error occurred while executing the crew.");
+      setParsedResponse(null);
+    } finally {
+      setIsLoading(false);
     }
 
     setInputStr("");
@@ -214,10 +237,14 @@ export default function Dashboard() {
     }
   };
 
-  const renderAgentTools = (agentTools: string | null) => {
+  const renderAgentTools = (agentTools: string | string[] | null) => {
     if (!agentTools) return null;
 
-    return agentTools.split(",").map((tool, index) => (
+    const toolsArray = Array.isArray(agentTools)
+      ? agentTools
+      : agentTools.split(",");
+
+    return toolsArray.map((tool, index) => (
       <Badge key={index} variant="secondary">
         <PenTool className="h-3 w-3 mr-1" />
         {tool.trim()}
@@ -442,16 +469,30 @@ export default function Dashboard() {
                     placeholder="Enter input data"
                     onKeyUp={(e) => e.key === "Enter" && handleExecuteCrew()}
                   />
-                  <Button onClick={handleExecuteCrew}>
+                  <Button onClick={handleExecuteCrew} disabled={isLoading}>
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
-                <Textarea
-                  value={apiResponse}
-                  readOnly
-                  className="h-[calc(100vh-20rem)] resize-none"
-                  placeholder="API response will appear here..."
-                />
+                <Card className="h-[calc(100vh-20rem)] overflow-auto">
+                  <CardHeader>
+                    <CardTitle>Result</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoading ? (
+                      <div className="space-y-4">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                      </div>
+                    ) : parsedResponse ? (
+                      <ReactMarkdown className="prose dark:prose-invert max-w-none">
+                        {parsedResponse.raw}
+                      </ReactMarkdown>
+                    ) : (
+                      <p>No result to display</p>
+                    )}
+                  </CardContent>
+                </Card>
               </CardContent>
             </Card>
           </div>

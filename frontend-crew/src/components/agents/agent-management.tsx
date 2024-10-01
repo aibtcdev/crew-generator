@@ -23,7 +23,7 @@ interface Agent {
   role: string;
   goal: string;
   backstory: string;
-  agent_tools: string;
+  agent_tools: string[];
 }
 
 interface AgentFormProps {
@@ -31,7 +31,7 @@ interface AgentFormProps {
   loading: boolean;
 }
 
-const AVAILABLE_TOOLS = ["search_web"];
+const AVAILABLE_TOOLS = ["search_web", "fetch_contract_code"];
 
 function AgentForm({ onSubmit, loading }: AgentFormProps) {
   const [agentName, setAgentName] = useState("");
@@ -48,7 +48,7 @@ function AgentForm({ onSubmit, loading }: AgentFormProps) {
       role,
       goal,
       backstory,
-      agent_tools: selectedTools.join(","),
+      agent_tools: selectedTools,
     });
     setAgentName("");
     setRole("");
@@ -189,8 +189,12 @@ export default function AgentManagement({
         throw new Error("No authenticated user found");
       }
 
+      // Format the agent_tools as a PostgreSQL array
+      const formattedAgentTools = `{${agentData.agent_tools.join(",")}}`;
+
       const { error } = await supabase.from("agents").insert({
         ...agentData,
+        agent_tools: formattedAgentTools, // Use the formatted array
         crew_id: crewId,
         profile_id: user.id,
       });

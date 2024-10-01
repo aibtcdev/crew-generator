@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, UserIcon, ClipboardList, Trash2 } from "lucide-react";
+import { Send, UserIcon, ClipboardList, Trash2, PenTool } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import CrewManagement from "../crews/crew-management";
 import AgentManagement from "../agents/agent-management";
@@ -29,6 +29,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 
 interface Crew {
   id: number;
@@ -42,6 +43,7 @@ interface Agent {
   role: string;
   goal: string;
   backstory: string;
+  agent_tools: string;
 }
 
 interface Task {
@@ -212,6 +214,17 @@ export default function Dashboard() {
     }
   };
 
+  const renderAgentTools = (agentTools: string | null) => {
+    if (!agentTools) return null;
+
+    return agentTools.split(",").map((tool, index) => (
+      <Badge key={index} variant="secondary">
+        <PenTool className="h-3 w-3 mr-1" />
+        {tool.trim()}
+      </Badge>
+    ));
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-8">
       <h1 className="text-2xl font-bold mb-4">Crew Dashboard</h1>
@@ -272,6 +285,13 @@ export default function Dashboard() {
                                 <p>
                                   <strong>Backstory:</strong> {agent.backstory}
                                 </p>
+
+                                <div>
+                                  <strong>Tools:</strong>
+                                  <div className="flex flex-wrap gap-2 mt-1">
+                                    {renderAgentTools(agent.agent_tools)}
+                                  </div>
+                                </div>
                               </div>
                             </DialogContent>
                           </Dialog>
@@ -305,6 +325,14 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <p className="text-sm text-gray-600 mb-2">{agent.role}</p>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <div>
+                          <strong>Tools:</strong>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {renderAgentTools(agent.agent_tools)}
+                          </div>
+                        </div>
+                      </div>
                       <h4 className="font-semibold mt-2 mb-1">
                         Assigned Tasks:
                       </h4>

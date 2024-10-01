@@ -9,38 +9,9 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      agent_tools: {
-        Row: {
-          agent_id: number
-          tool_id: number
-        }
-        Insert: {
-          agent_id: number
-          tool_id: number
-        }
-        Update: {
-          agent_id?: number
-          tool_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "agent_tools_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "agents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agent_tools_tool_id_fkey"
-            columns: ["tool_id"]
-            isOneToOne: false
-            referencedRelation: "tools"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       agents: {
         Row: {
+          agent_tools: string | null
           backstory: string | null
           created_at: string | null
           crew_id: number | null
@@ -51,6 +22,7 @@ export type Database = {
           role: string
         }
         Insert: {
+          agent_tools?: string | null
           backstory?: string | null
           created_at?: string | null
           crew_id?: number | null
@@ -61,6 +33,7 @@ export type Database = {
           role: string
         }
         Update: {
+          agent_tools?: string | null
           backstory?: string | null
           created_at?: string | null
           crew_id?: number | null
@@ -83,35 +56,6 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      crew_results: {
-        Row: {
-          actual_output: string | null
-          created_at: string | null
-          crew_id: number | null
-          id: number
-        }
-        Insert: {
-          actual_output?: string | null
-          created_at?: string | null
-          crew_id?: number | null
-          id?: number
-        }
-        Update: {
-          actual_output?: string | null
-          created_at?: string | null
-          crew_id?: number | null
-          id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "crew_results_crew_id_fkey"
-            columns: ["crew_id"]
-            isOneToOne: false
-            referencedRelation: "crews"
             referencedColumns: ["id"]
           },
         ]
@@ -177,36 +121,6 @@ export type Database = {
           },
         ]
       }
-      task_tools: {
-        Row: {
-          task_id: number
-          tool_id: number
-        }
-        Insert: {
-          task_id: number
-          tool_id: number
-        }
-        Update: {
-          task_id?: number
-          tool_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_tools_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "tasks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "task_tools_tool_id_fkey"
-            columns: ["tool_id"]
-            isOneToOne: false
-            referencedRelation: "tools"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       tasks: {
         Row: {
           agent_id: number | null
@@ -216,6 +130,7 @@ export type Database = {
           expected_output: string
           id: number
           profile_id: string | null
+          task_tools: string | null
         }
         Insert: {
           agent_id?: number | null
@@ -225,6 +140,7 @@ export type Database = {
           expected_output: string
           id?: number
           profile_id?: string | null
+          task_tools?: string | null
         }
         Update: {
           agent_id?: number | null
@@ -234,6 +150,7 @@ export type Database = {
           expected_output?: string
           id?: number
           profile_id?: string | null
+          task_tools?: string | null
         }
         Relationships: [
           {
@@ -258,27 +175,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      tools: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: number
-          name: string
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: number
-          name: string
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: number
-          name?: string
-        }
-        Relationships: []
       }
     }
     Views: {

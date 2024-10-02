@@ -254,8 +254,6 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto p-4 space-y-8">
-      <h1 className="text-2xl font-bold mb-4">Crew Dashboard</h1>
-
       {!selectedCrew ? (
         <CrewManagement
           crews={crews}

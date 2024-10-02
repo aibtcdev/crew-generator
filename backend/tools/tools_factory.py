@@ -1,15 +1,11 @@
 from crewai_tools import SerperDevTool
-from .fetch_contract_code_tool import FetchContractCodeTool
-from .fetch_interface_data_tool import FetchInterfaceDataTool
-
+# from .fetch_contract_code import FetchContractCodeTool
 def initialize_tools():
     """
     Initialize and return a dictionary of available tools.
     """
     return {
         "web_search": SerperDevTool(),  
-        "fetch_contract_code": FetchContractCodeTool(),
-        "fetch_interface_data": FetchInterfaceDataTool(),
     }
 
 def get_agent_tools(tool_names, tools_map):

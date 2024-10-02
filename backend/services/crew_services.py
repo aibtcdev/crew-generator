@@ -1,14 +1,13 @@
-# Import 
 from backend.db.supabase_client import supabase
 from crewai import Agent, Task, Crew, Process
 from dotenv import load_dotenv
 from backend.tools.tools_factory import initialize_tools, get_agent_tools
 
 
+# Load environment variables and initialize tools
 load_dotenv()
 tools_map = initialize_tools()
 print("Available tools:", tools_map)
-
 
 # Function to fetch agents and tasks for a specific crew
 def fetch_crew_data(crew_id: int):
@@ -32,62 +31,11 @@ def fetch_crew_data(crew_id: int):
     
     return agents_response.data, tasks_response.data
 
-# Function to create the manager agent
-def create_manager_agent():
-    """
-    Create and return a manager agent who oversees and refines tasks, as well as handles task outputs.
-
-    Returns:
-        Agent: The manager agent object.
-    """
-    manager_agent = Agent(
-        role="Manager",
-        goal="Oversee, refine tasks, and coordinate the flow of task outputs between agents.",
-        backstory=(
-            "You are a skilled manager responsible for refining tasks and managing outputs between agents."
-            "You ensure that each task is well-structured and agents work with the correct information."
-            "You should only guide and improve the task description, not perform the task yourself."
-        ),
-        verbose=True,
-        memory=True,
-        allow_delegation=True 
-    )
-    return manager_agent
-
-# Function to refine tasks by the manager agent
-def refine_task(manager, task_description, agent_role, task_output):
-    """
-    Manager refines the task description by processing the task using Agent's execute_task method.
-
-    Args:
-        manager (Agent): The manager agent refining the task.
-        task_description (str): Original task description.
-        agent_role (str): Role of the agent assigned to this task.
-        task_output (str): Output of the previous task (if applicable).
-
-    Returns:
-        str: The refined task description.
-    """
-    task_refinement_description = f"{task_description}\n\nManager is refining this task for the {agent_role}."
-
-    if task_output:
-        task_refinement_description += f"\n\nPrevious task output to consider: {task_output}"
-
-    refined_description = manager.execute_task(
-        task=Task(
-            description=task_refinement_description,
-            expected_output="Refined task description"
-        )
-    )
-
-    return refined_description
 
 # Function to execute a crew
 def execute_crew(crew_id: int, input_str: str):
     """
     Execute a crew by fetching agents and tasks for a given crew_id and managing the flow of outputs between tasks.
-    
-    The manager agent refines each task and ensures proper input/output flow between tasks.
 
     Args:
         crew_id (int): ID of the crew to be executed.
@@ -102,74 +50,73 @@ def execute_crew(crew_id: int, input_str: str):
     # Create agents and index them by agent_id
     agents = {}
     for agent_data in agents_data:
-        # Fetch the tools for the agent from the agent_tools column
-        agent_tool_names = agent_data.get('agent_tools', [])  # This will now be an array by default
-        
-        print(f"Agent {agent_data['role']} fetched tools: {agent_tool_names}")
-        
+        # Fetch agent-specific details like tools, goal, and backstory from the database
+        agent_role = agent_data.get('role')
+        agent_goal = agent_data.get('goal' )
+        agent_backstory = agent_data.get('backstory' )
+        agent_tool_names = agent_data.get('agent_tools', [])  # Fetch agent tools
+
+        # Print agent details fetched from the database
+        print(f"Agent Role: {agent_role}")
+        print(f"Agent Goal: {agent_goal}")
+        print(f"Agent Backstory: {agent_backstory}")
+        print(f"Agent Tools: {agent_tool_names}")
+
         # Get the tools for the agent
         agent_tools = get_agent_tools(agent_tool_names, tools_map)
-        # Debugging: Check if tools were correctly mapped
         if agent_tools:
-            print(f"Tools assigned to {agent_data['role']}: {[tool.__class__.__name__ for tool in agent_tools]}")
+            print(f"Tools assigned to {agent_role}: {[tool.__class__.__name__ for tool in agent_tools]}")
         else:
-            print(f"Agent {agent_data['role']} has no valid tools assigned or tools not mapped correctly.")
-        
-        # Create each agent with the assigned tools (or none if the list is empty)
+            print(f"Agent {agent_role} has no valid tools assigned or tools not mapped correctly.")
+
+        # Create the agent with the fetched details
         agent = Agent(
-            role=agent_data['role'],
-            goal=f"Your goal is to gather data using available tools like {', '.join(agent_tool_names)}.",
-            backstory=(
-                f"As a {agent_data['role']}, you are highly skilled at using tools to gather information and solve problems."
-                " You must make extensive use of tools like web search to achieve accurate results."
-            ),
+            role=agent_role,
+            goal=agent_goal,  # Use the goal fetched from the database
+            backstory=agent_backstory,  # Use the backstory fetched from the database
             verbose=True,
             memory=True,
-            tools=agent_tools  # Assign the tools (empty list is fine)
+            tools=agent_tools  # Assign tools (can be empty)
         )
         # Map each agent to its unique agent_id
         agents[agent_data['id']] = agent
     
-    # Initialize variables to track task outputs and the manager agent
+    # Initialize variables to track task outputs
     task_outputs = {}  # Dictionary to store task outputs for each agent
-    refined_tasks = []  # List of tasks refined by the manager
-    
-    # Add the Manager Agent
-    manager_agent = create_manager_agent()
-    agents['manager'] = manager_agent  # Add the manager agent to the list of agents
 
-    # Create tasks and have the manager refine them before execution
+    # Create tasks from the database and execute them
+    tasks = []
     for task_data in tasks_data:
         agent_id = task_data['agent_id']  # Find the agent responsible for the task
         
         if agent_id not in agents:
             raise ValueError(f"Agent with id {agent_id} not found for task {task_data['id']}.")
-        
+
+        # Fetch task-specific details like description and expected_output from the database
+        task_description = task_data.get('description')
+        task_expected_output = task_data.get('expected_output')
+
+        # Print task details fetched from the database
+        print(f"\nTask Description: {task_description}")
+        print(f"Expected Output: {task_expected_output}")
+
         # If this is the first task, provide the user input to the description
         if not task_outputs:  # If no tasks have been executed yet
-            task_description = f"{task_data['description']}\n\nUser input: {input_str}"
-        else:
-            # For subsequent tasks, pass the output of the previous task(s) instead of user input
-            task_description = task_data['description']
-        
-        # Manager refines the task before assigning it to the agent
-        agent_role = agents[agent_id].role
-        previous_output = task_outputs.get(agent_role, '')  # Get the output of the previous task for refinement
-        refined_description = refine_task(manager_agent, task_description, agent_role, previous_output)
-        
-        # Create the refined task
+            task_description = f"{task_description}\n\nuser_input: {input_str}"
+
+        # Create the task
         task = Task(
-            description=refined_description,
-            expected_output=task_data['expected_output'],
+            description=task_description,  # Use the description from the database
+            expected_output=task_expected_output,  # Use the expected output from the database
             agent=agents[agent_id],  # Assign the task to the correct agent
             async_execution=False
         )
-        refined_tasks.append(task)  # Store the refined task
+        tasks.append(task)  # Store the task
 
-    # Create the crew with all refined tasks and agents
+    # Create the crew with all tasks and agents
     crew = Crew(
-        agents=list(agents.values()),  # Include all agents (including the manager)
-        tasks=refined_tasks,  # Use the refined tasks
+        agents=list(agents.values()),  # Include all agents
+        tasks=tasks,  # Use the tasks fetched from the database
         process=Process.sequential  # Tasks will be executed in sequence
     )
     
@@ -177,10 +124,10 @@ def execute_crew(crew_id: int, input_str: str):
     print("\n--- Crew Execution Started ---")
     
     # Execute the crew and return the result
-    result = crew.kickoff(inputs={'input': input_str})
+    result = crew.kickoff(inputs={'user_input': input_str})
 
     # After each task is executed, collect the output and store it in task_outputs
-    for task in refined_tasks:
+    for task in tasks:
         task_outputs[task.agent.role] = task.output  # Store the output of each task by agent role
         
         # Log whether tools were used

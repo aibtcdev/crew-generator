@@ -61,8 +61,8 @@ function ConnectWallet() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p>mainnet: {truncateWalletAddress(mainnetAddress)}</p>
-            <p>testnet: {truncateWalletAddress(testnetAddress)}</p>
+            <p>{truncateWalletAddress(mainnetAddress)}</p>
+            {/*<p>testnet: {truncateWalletAddress(testnetAddress)}</p>*/}
           </CardContent>
           <CardFooter>
             <Button

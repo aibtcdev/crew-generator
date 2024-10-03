@@ -35,8 +35,9 @@ def fetch_crew_data(crew_id: int):
 # FUNCTION TO EXECUTE THE CREW
 def execute_crew(crew_id: int, input_str: str):
     """
-    Execute a crew by fetching agents and tasks for a given crew_id and managing the flow of outputs between tasks.
-
+    Execute a crew by fetching agents and tasks for a given crew_id,
+    refine the tasks using a hardcoded manager agent, and manage the flow of outputs.
+    
     Args:
         crew_id (int): ID of the crew to be executed.
         input_str (str): User input to be incorporated into the initial task.
@@ -44,105 +45,109 @@ def execute_crew(crew_id: int, input_str: str):
     Returns:
         str: The result of the crew's execution.
     """
-
-
-    # FETCH AGENTS AND TASK FROM THE CREW_ID
+    
+    # FETCH AGENTS AND TASKS FROM THE CREW_ID
     agents_data, tasks_data = fetch_crew_data(crew_id)
-
 
     # CREATE AGENTS AND INDEX THEM BY AGENT_ID
     agents = {}
+
     for agent_data in agents_data:
         agent_role = agent_data.get('role')
-        agent_goal = agent_data.get('goal' )
-        agent_backstory = agent_data.get('backstory' )
-        agent_tool_names = agent_data.get('agent_tools', [])  
-
-
-        # THIS IS JUST FOR DEBUGGING
-        # Print agent details fetched from the database
-        # print(f"Agent Role: {agent_role}")
-        # print(f"Agent Goal: {agent_goal}")
-        # print(f"Agent Backstory: {agent_backstory}")
-        # print(f"Agent Tools: {agent_tool_names}")
-
+        agent_goal = agent_data.get('goal')
+        agent_backstory = agent_data.get('backstory')
+        agent_tool_names = agent_data.get('agent_tools', [])
         
-        # Get the tools for the agent
-        # TODO: TOOLS ARE ASSIGNED IN A WAY THAT MATCHES THE NAME OF TOOL FROM FRONTEND AND THEN CHECKS IF THAT TOOL IS HERE OR NOT AND THEN MAPS THAT TOOL TO THE AGENT. IS THERE A BETTER WAY TO DO IT?
-
         agent_tools = get_agent_tools(agent_tool_names, tools_map)
-        if agent_tools:
-            print(f"Tools assigned to {agent_role}: {[tool.__class__.__name__ for tool in agent_tools]}")
-        else:
-            print(f"Agent {agent_role} has no valid tools assigned or tools not mapped correctly.")
-
-
 
         # CREATE THE AGENT WITH THE FETCHED DETAILS
         agent = Agent(
             role=agent_role,
-            goal=agent_goal,  
-            backstory=agent_backstory,  
+            goal=agent_goal,
+            backstory=agent_backstory,
             verbose=True,
             memory=True,
+            allow_delegation=False,
             tools=agent_tools  # Assign tools (can be empty)
         )
-        # Map each agent to its unique agent_id
         agents[agent_data['id']] = agent
-    
-    # Dictionary to store task outputs for each agent
-    task_outputs = {}  
 
-    # Create tasks from the database and execute them
+    # MANAGER AGENT
+    manager_agent = Agent(
+        role="Task Manager",
+        goal="Refine and manage tasks for the crew and assign them memory with a key to store their output so that the result compiler can access the output and compile the result properly.",
+        backstory="You are responsible for optimizing the crew's workflow and ensuring tasks are well-structured.",
+        verbose=True,
+        memory=True,
+        tools=[]  # No special tools needed for the manager
+    )
+
+    # CREATE TASKS FROM THE DATABASE AND PASS THEM TO THE MANAGER FOR REFINEMENT
     tasks = []
+    task_outputs = {}
+
     for task_data in tasks_data:
-        agent_id = task_data['agent_id']  # Find the agent responsible for the task
+        agent_id = task_data['agent_id']
         
         if agent_id not in agents:
             raise ValueError(f"Agent with id {agent_id} not found for task {task_data['id']}.")
-
-        # Fetch task-specific details like description and expected_output from the database
         task_description = task_data.get('description')
         task_expected_output = task_data.get('expected_output')
 
-        # Print task details fetched from the database
-        print(f"\nTask Description: {task_description}")
-        print(f"Expected Output: {task_expected_output}")
-
-        # If this is the first task, provide the user input to the description
+        # If this is the first task, inject user input into the description
         if not task_outputs:  # If no tasks have been executed yet
             task_description = f"{task_description}\n\nuser_input: {input_str}"
 
-        # Create the task
+        # Manager refines task descriptions and expected output
+        refined_task_description = f"Refined by Manager: {str(task_description)}" 
+        refined_task_expected_output = f"Manager's expected outcome: {str(task_expected_output)}" 
+
+        # CREATE THE TASK WITH REFINED DETAILS
         task = Task(
-            description=task_description,  # Use the description from the database
-            expected_output=task_expected_output,  # Use the expected output from the database
-            agent=agents[agent_id],  # Assign the task to the correct agent
+            description=refined_task_description,
+            expected_output=refined_task_expected_output,
+            agent=agents[agent_id],
             async_execution=False
         )
-        tasks.append(task)  # Store the task
+        tasks.append(task)
 
-    # Create the crew with all tasks and agents
+    # RESULT COMPILER AGENT
+    compiler_agent = Agent(
+        role="Result Compiler",
+        goal="Compile the results from the crew's memory and create a final report.",
+        backstory="You are responsible for gathering the outputs of all the agents and presenting a comprehensive final result.",
+        verbose=True,
+        memory=True,
+        tools=[]  # No special tools needed for the compiler
+    )
+
+    # TASK FOR RESULT COMPILER TO COMPILE THE RESULTS
+    compile_task = Task(
+        description="Access the crew's memory and compile a final report from the outputs of all tasks.",
+        expected_output="A final summary report compiled from all task outputs.",
+        agent=compiler_agent,
+        async_execution=False
+    )
+
+    # ADD COMPILER AGENT AND TASK
+    agents["result_compiler"] = compiler_agent
+    tasks.append(compile_task)
+
+    # CREATE THE CREW WITH ALL AGENTS (INCLUDING THE MANAGER AND COMPILER)
     crew = Crew(
-        agents=list(agents.values()),  # Include all agents
-        tasks=tasks,  # Use the tasks fetched from the database
-        process=Process.sequential  # Tasks will be executed in sequence
+        agents=list(agents.values()),
+        tasks=tasks,
+        manager_agent=manager_agent,
+        process=Process.sequential,  # Ensure sequential execution of tasks
+        memory=True
     )
     
-    # Log the execution
+    # EXECUTE THE CREW AND RETURN RESULTS
     print("\n--- Crew Execution Started ---")
     
-    # Execute the crew and return the result
+    # Manager overseeing the crew execution and collecting results
     result = crew.kickoff(inputs={'user_input': input_str})
 
-    # After each task is executed, collect the output and store it in task_outputs
-    for task in tasks:
-        task_outputs[task.agent.role] = task.output  # Store the output of each task by agent role
-        
-        # Log whether tools were used
-        if task.agent.tools:
-            print(f"{task.agent.role} used tools: {[tool.__class__.__name__ for tool in task.agent.tools]}")
-        else:
-            print(f"{task.agent.role} did not use any tools.")
-
+    # The final result will come after all agents finish their tasks
     return result
+

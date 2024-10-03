@@ -1,3 +1,4 @@
+# THIS TOOL HELPS TO GET MARKET DATA OF BITCOIN
 from crewai_tools import BaseTool
 import requests
 import os

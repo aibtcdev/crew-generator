@@ -12,6 +12,7 @@ import { GithubIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { socialAuth } from "@/lib/auth-helpers";
 import { AppConfig, showConnect, UserSession } from "@stacks/connect";
+import StacksIcon from "../logos/stacks-icon";
 
 const appConfig = new AppConfig(["store_write", "publish_data"]);
 export const userSession = new UserSession({ appConfig });
@@ -69,6 +70,7 @@ function ConnectWallet() {
               onClick={disconnectWallet}
               className="w-full flex items-center justify-center"
             >
+              <StacksIcon className="mr-2 h-6 w-6" />
               Disconnect Wallet
             </Button>
           </CardFooter>
@@ -83,6 +85,7 @@ function ConnectWallet() {
       onClick={authenticateWallet}
       className="w-full flex items-center justify-center"
     >
+      <StacksIcon className="mr-2 h-6 w-6" />
       Connect Wallet
     </Button>
   );

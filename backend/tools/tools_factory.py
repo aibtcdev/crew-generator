@@ -4,6 +4,7 @@ def initialize_tools():
     """
     Initialize and return a dictionary of available tools.
     """
+    # NAMES SHOULD BE EXACTLY WHAT'S IN THE FRONTEND
     return {
         "web_search": SerperDevTool(),  
     }

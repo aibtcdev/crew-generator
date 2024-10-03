@@ -4,22 +4,22 @@ from dotenv import load_dotenv
 from backend.tools.tools_factory import initialize_tools, get_agent_tools
 
 
-# Load environment variables and initialize tools
 load_dotenv()
 tools_map = initialize_tools()
+
+
+# CHECK IF THE TOOLS ARE THERE OR NOT (ONLY FOR DEBUGGING)
 print("Available tools:", tools_map)
 
-# Function to fetch agents and tasks for a specific crew
+
+# FUNCTION TO FETCH THE AGENTS AND TASKS FROM THE SUPABASE TABLE
 def fetch_crew_data(crew_id: int):
     """
     Fetch agents and tasks for the specified crew from Supabase.
-    
     Args:
         crew_id (int): ID of the crew whose agents and tasks are to be fetched.
-
     Returns:
         Tuple: A tuple containing a list of agents and a list of tasks.
-    
     Raises:
         ValueError: If no agents or tasks are found for the specified crew.
     """
@@ -32,7 +32,7 @@ def fetch_crew_data(crew_id: int):
     return agents_response.data, tasks_response.data
 
 
-# Function to execute a crew
+# FUNCTION TO EXECUTE THE CREW
 def execute_crew(crew_id: int, input_str: str):
     """
     Execute a crew by fetching agents and tasks for a given crew_id and managing the flow of outputs between tasks.
@@ -44,36 +44,45 @@ def execute_crew(crew_id: int, input_str: str):
     Returns:
         str: The result of the crew's execution.
     """
-    # Fetch agents and tasks from Supabase
+
+
+    # FETCH AGENTS AND TASK FROM THE CREW_ID
     agents_data, tasks_data = fetch_crew_data(crew_id)
 
-    # Create agents and index them by agent_id
+
+    # CREATE AGENTS AND INDEX THEM BY AGENT_ID
     agents = {}
     for agent_data in agents_data:
-        # Fetch agent-specific details like tools, goal, and backstory from the database
         agent_role = agent_data.get('role')
         agent_goal = agent_data.get('goal' )
         agent_backstory = agent_data.get('backstory' )
-        agent_tool_names = agent_data.get('agent_tools', [])  # Fetch agent tools
+        agent_tool_names = agent_data.get('agent_tools', [])  
 
+
+        # THIS IS JUST FOR DEBUGGING
         # Print agent details fetched from the database
-        print(f"Agent Role: {agent_role}")
-        print(f"Agent Goal: {agent_goal}")
-        print(f"Agent Backstory: {agent_backstory}")
-        print(f"Agent Tools: {agent_tool_names}")
+        # print(f"Agent Role: {agent_role}")
+        # print(f"Agent Goal: {agent_goal}")
+        # print(f"Agent Backstory: {agent_backstory}")
+        # print(f"Agent Tools: {agent_tool_names}")
 
+        
         # Get the tools for the agent
+        # TODO: TOOLS ARE ASSIGNED IN A WAY THAT MATCHES THE NAME OF TOOL FROM FRONTEND AND THEN CHECKS IF THAT TOOL IS HERE OR NOT AND THEN MAPS THAT TOOL TO THE AGENT. IS THERE A BETTER WAY TO DO IT?
+
         agent_tools = get_agent_tools(agent_tool_names, tools_map)
         if agent_tools:
             print(f"Tools assigned to {agent_role}: {[tool.__class__.__name__ for tool in agent_tools]}")
         else:
             print(f"Agent {agent_role} has no valid tools assigned or tools not mapped correctly.")
 
-        # Create the agent with the fetched details
+
+
+        # CREATE THE AGENT WITH THE FETCHED DETAILS
         agent = Agent(
             role=agent_role,
-            goal=agent_goal,  # Use the goal fetched from the database
-            backstory=agent_backstory,  # Use the backstory fetched from the database
+            goal=agent_goal,  
+            backstory=agent_backstory,  
             verbose=True,
             memory=True,
             tools=agent_tools  # Assign tools (can be empty)
@@ -81,8 +90,8 @@ def execute_crew(crew_id: int, input_str: str):
         # Map each agent to its unique agent_id
         agents[agent_data['id']] = agent
     
-    # Initialize variables to track task outputs
-    task_outputs = {}  # Dictionary to store task outputs for each agent
+    # Dictionary to store task outputs for each agent
+    task_outputs = {}  
 
     # Create tasks from the database and execute them
     tasks = []

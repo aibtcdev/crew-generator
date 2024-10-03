@@ -1,7 +1,14 @@
+import os
 from supabase import create_client, Client
+from dotenv import load_dotenv
 
-# Initialize Supabase client
-url = "https://zcjtmqtfwtdrsogrrwej.supabase.co"
-service_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpjanRtcXRmd3RkcnNvZ3Jyd2VqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcyNzM3NDEwNywiZXhwIjoyMDQyOTUwMTA3fQ.wgGxaEvWHEhO3qWmDWTiqhhqEXePHFO_3M0kbW3vnmk"
+# Load environment variables from .env file
+load_dotenv()
+
+# Initialize Supabase client using environment variables
+url = os.getenv("SUPABASE_URL")
+service_key = os.getenv("SUPABASE_SERVICE_KEY")
 
 supabase: Client = create_client(url, service_key)
+
+

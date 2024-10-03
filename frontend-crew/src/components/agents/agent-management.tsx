@@ -31,7 +31,7 @@ interface AgentFormProps {
   loading: boolean;
 }
 
-const AVAILABLE_TOOLS = ["search_web", "fetch_contract_code"];
+const AVAILABLE_TOOLS = ["search_web", "fetch_contract_code", "bitcoin_data"];
 
 function AgentForm({ onSubmit, loading }: AgentFormProps) {
   const [agentName, setAgentName] = useState("");

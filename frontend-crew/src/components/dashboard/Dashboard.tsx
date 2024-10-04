@@ -9,9 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import remarkGfm from "remark-gfm";
 import { Send, UserIcon, ClipboardList, Trash2, PenTool } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import CrewManagement from "../crews/crew-management";
-import AgentManagement from "../agents/agent-management";
-import TaskManagement from "../tasks/task-management";
+import CrewManagement from "../crews/CrewManagement";
+import AgentManagement from "../agents/AgentManagement";
+import TaskManagement from "../tasks/TaskManagement";
 import {
   Dialog,
   DialogContent,

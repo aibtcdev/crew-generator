@@ -96,10 +96,10 @@ export function Authentication() {
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">
-          Sign In to create Crew
+          SIGN IN TO CREATE CREWS
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col space-y-4">
+      <CardContent className="flex gap-2">
         <Button
           variant="outline"
           onClick={() => socialAuth("github")}

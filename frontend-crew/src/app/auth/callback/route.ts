@@ -56,21 +56,19 @@ export async function GET(request: Request) {
     }
 
     // Fetch username from profiles table
-    const { data: profileData, error: profileError } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .single();
+    // const { data: profileData, error: profileError } = await supabase
+    //   .from("profiles")
+    //   .select("username")
+    //   .eq("id", user.id)
+    //   .single();
 
-    if (profileError || !profileData) {
-      console.error("Error fetching profile information:", profileError);
-      return NextResponse.redirect(`${origin}/auth-error`);
-    }
-
-    const username = profileData.username;
+    // if (profileError || !profileData) {
+    //   console.error("Error fetching profile information:", profileError);
+    //   return NextResponse.redirect(`${origin}/auth-error`);
+    // }
 
     // Construct user-specific dashboard URL using username
-    const userDashboardUrl = `${origin}/dashboard/${username}`;
+    const userDashboardUrl = `${origin}/dashboard/`;
 
     // Successful authentication
     return NextResponse.redirect(userDashboardUrl);

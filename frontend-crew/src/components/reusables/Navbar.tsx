@@ -10,11 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 
@@ -40,22 +38,6 @@ export function Nav() {
                 Home
               </NavigationMenuLink>
             </Link>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-                <ListItem href="/docs" title="Documentation">
-                  Comprehensive guides and API references.
-                </ListItem>
-                <ListItem href="https://github.com" title="GitHub">
-                  Explore our open-source projects and contribute.
-                </ListItem>
-                <ListItem href="https://discord.com" title="Discord Community">
-                  Join our community for discussions and support.
-                </ListItem>
-              </ul>
-            </NavigationMenuContent>
           </NavigationMenuItem>
           <NavigationMenuItem>
             <Link href="/about" legacyBehavior passHref>

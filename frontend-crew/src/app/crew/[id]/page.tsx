@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase-client";
-import AgentManagement from "@/components/agents/AgentManagement";
+import { AgentManagement } from "@/components/agents/AgentManagement";
 import TaskManagement from "@/components/tasks/TaskManagement";
 import ExecutionPanel from "@/components/dashboard/Execution";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,37 +100,13 @@ export default function CrewDetails() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-8">
           <Card>
-            <CardHeader>
-              <CardTitle>Agents</CardTitle>
-            </CardHeader>
             <CardContent>
               <AgentManagement crewId={crew.id} onAgentAdded={fetchAgents} />
-              <ul className="mt-4 space-y-2">
-                {agents.map((agent) => (
-                  <li
-                    key={agent.id}
-                    className="flex justify-between items-center"
-                  >
-                    <span>{agent.name}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {agent.role}
-                    </span>
-                  </li>
-                ))}
-              </ul>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader>
-              <CardTitle>Tasks</CardTitle>
-            </CardHeader>
             <CardContent>
               <TaskManagement crewId={crew.id} onTaskAdded={fetchTasks} />
-              <ul className="mt-4 space-y-2">
-                {tasks.map((task) => (
-                  <li key={task.id}>{task.description}</li>
-                ))}
-              </ul>
             </CardContent>
           </Card>
         </div>

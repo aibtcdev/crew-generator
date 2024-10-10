@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase-client";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -12,13 +12,20 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { PlusIcon, Trash2Icon, PlayIcon } from "lucide-react";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { PlusIcon, MoreHorizontal, Trash2Icon, UserIcon } from "lucide-react";
 import CrewForm from "./CrewForm";
 
 interface Crew {
@@ -33,13 +40,14 @@ interface CrewManagementProps {
   onCrewUpdate: () => Promise<void> | void;
 }
 
-export default function CrewManagement({
+export function CrewManagement({
   crews,
   onCrewSelect,
   onCrewUpdate,
 }: CrewManagementProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleDelete = async (id: number) => {
     setLoading(true);
@@ -64,12 +72,12 @@ export default function CrewManagement({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Crews</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Crews</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button size="sm">
               <PlusIcon className="mr-2 h-4 w-4" />
               Add Crew
             </Button>
@@ -85,31 +93,62 @@ export default function CrewManagement({
           </DialogContent>
         </Dialog>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {crews.map((crew) => (
-          <Card key={crew.id}>
-            <CardHeader>
-              <CardTitle>{crew.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Created: {new Date(crew.created_at).toLocaleDateString()}</p>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={() => onCrewSelect(crew)}>
-                <PlayIcon className="mr-2 h-4 w-4" />
-                Select Crew
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => handleDelete(crew.id)}
-                disabled={loading}
-              >
-                <Trash2Icon className="mr-2 h-4 w-4" />
-                Delete
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
+      <div className="border rounded-md">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Select</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {crews.map((crew) => (
+              <TableRow key={crew.id}>
+                <TableCell className="font-medium">
+                  <div className="flex items-center space-x-2">
+                    <UserIcon className="h-4 w-4 text-primary" />
+                    <span>{crew.name}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {new Date(crew.created_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onCrewSelect(crew)}
+                  >
+                    Select Crew
+                  </Button>
+                </TableCell>
+                <TableCell className="text-right">
+                  {/* TODO: NEED TO ADD EDIT AND UPDATE OPTIONS TOO.. */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => handleDelete(crew.id)}
+                        disabled={loading}
+                        className="text-destructive"
+                      >
+                        <Trash2Icon className="mr-2 h-4 w-4" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

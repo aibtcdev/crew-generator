@@ -3,10 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase-client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import CrewManagement from "@/components/crews/CrewManagement";
-import Link from "next/link";
+import { CrewManagement } from "@/components/crews/CrewManagement";
 
 interface Crew {
   id: number;
@@ -42,30 +39,12 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto p-4 space-y-8">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Crews</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CrewManagement
-              crews={crews}
-              onCrewSelect={handleCrewSelect}
-              onCrewUpdate={fetchCrews}
-            />
-            <ul className="mt-4 space-y-2">
-              {crews.map((crew) => (
-                <li key={crew.id} className="flex justify-between items-center">
-                  <span>{crew.name}</span>
-                  <Link href={`/crew/${crew.id}`}>
-                    <Button variant="outline">View Details</Button>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <CrewManagement
+          crews={crews}
+          onCrewSelect={handleCrewSelect}
+          onCrewUpdate={fetchCrews}
+        />
       </div>
     </div>
   );

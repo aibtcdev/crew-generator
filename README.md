@@ -1,5 +1,13 @@
 # Crew Generator
 
+> [!IMPORTANT]
+> 
+> This repo is now deprecated in favor of:
+> - a TS front-end with Next.js at [aibtcdev-frontend](https://github.com/aibtcdev/aibtcdev-frontend)
+> - a Python back-end with CrewAI at [aibtcdev-backend](https://github.com/aibtcdev/aibtcdev-backend)
+>
+> Be sure to follow along with the latest [on our X account](https://x.com/aibtcdev) and [join our Discord](https://discord.gg/Z59Z3FNbEX)!
+
 Crew Generator is a powerful tool that helps you create your own crew without any programming knowledge. This project is divided into two main components:
 - **Frontend** (React with Next.js)
 - **Backend** (Python with FastAPI)
